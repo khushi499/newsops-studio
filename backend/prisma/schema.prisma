@@ -1,0 +1,100 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  EDITOR
+  ANALYST
+  READER
+}
+
+enum ArticleStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model User {
+  id           Int        @id @default(autoincrement())
+  name         String
+  email        String     @unique
+  password     String
+  role         Role       @default(READER)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  articles     Article[]  @relation("ArticleAuthor")
+  comments     Comment[]
+  bookmarks    Bookmark[]
+  auditLogs    AuditLog[]
+}
+
+model Source {
+  id           Int        @id @default(autoincrement())
+  name         String
+  url          String
+  category     String
+  reliability  Int        @default(4)
+  active       Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  articles     Article[]
+}
+
+model Article {
+  id           Int           @id @default(autoincrement())
+  title        String
+  slug         String        @unique
+  summary      String
+  content      String
+  imageUrl     String?
+  category     String
+  tags         String[]
+  status       ArticleStatus @default(DRAFT)
+  publishedAt  DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  sourceId     Int
+  authorId     Int
+  source       Source        @relation(fields: [sourceId], references: [id])
+  author       User          @relation("ArticleAuthor", fields: [authorId], references: [id])
+  comments     Comment[]
+  bookmarks    Bookmark[]
+}
+
+model Comment {
+  id          Int      @id @default(autoincrement())
+  content     String
+  createdAt   DateTime @default(now())
+  articleId   Int
+  userId      Int
+  article     Article  @relation(fields: [articleId], references: [id])
+  user        User     @relation(fields: [userId], references: [id])
+}
+
+model Bookmark {
+  id          Int      @id @default(autoincrement())
+  createdAt   DateTime @default(now())
+  userId      Int
+  articleId   Int
+  user        User     @relation(fields: [userId], references: [id])
+  article     Article  @relation(fields: [articleId], references: [id])
+
+  @@unique([userId, articleId])
+}
+
+model AuditLog {
+  id          Int      @id @default(autoincrement())
+  action      String
+  entity      String
+  entityId     String?
+  details     String?
+  createdAt   DateTime @default(now())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id])
+}

@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.env
+backend/node_modules/
+frontend/node_modules/
+backend/uploads/
+backend/coverage/
+frontend/dist/
+.vscode/
+.DS_Store
